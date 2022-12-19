@@ -1,20 +1,23 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
+import axios from "@/service/index.js";
+import DiagramForm from "@/components/DiagramForm.vue";
 import type {
   Header,
   Item,
   ServerOptions,
   ClickRowArgument,
 } from "vue3-easy-data-table";
-import axios from "@/service/index.js";
-import DiagramForm from "@/components/DiagramForm.vue";
+import type Diagram from "@/types/Diagram";
+import type PageRequest from "@/types/PageRequest";
+import type PageResponse from "@/types/PageResponse";
+import type { AxiosResponse } from "axios";
 
 const router = useRouter();
 
-const rowsItems = [10, 25, 50, 100];
-
-const themeColor = "#0049B0";
+const rowsItems: number[] = [10, 25, 50, 100];
+const themeColor: string = "#0049B0";
 
 const headers: Header[] = [
   { text: "ID", value: "id", sortable: true },
@@ -26,18 +29,18 @@ const headers: Header[] = [
 const items = ref<Item[]>([]);
 const itemsSelected = ref<Item[]>([]);
 
-const serverItemsLength = ref(0);
+const serverItemsLength = ref<number>(0);
 const serverOptions = ref<ServerOptions>({
   page: 1,
   rowsPerPage: 10,
 });
 
-const loading = ref(false);
+const loading = ref<boolean>(false);
 
-const parameters = computed(() => {
+const parameters = computed<PageRequest>(() => {
   const { page, rowsPerPage, sortBy, sortType } = serverOptions.value;
 
-  const result: any = {
+  const result: PageRequest = {
     page: page - 1,
     size: rowsPerPage,
   };
@@ -48,33 +51,35 @@ const parameters = computed(() => {
   return result;
 });
 
-const getDiagrams = async () => {
+const getDiagrams = async (): Promise<void> => {
   loading.value = true;
 
-  const response = await axios.get("/diagrams", { params: parameters.value });
-  const data = response.data;
+  const response: AxiosResponse = await axios.get("/diagrams", {
+    params: parameters.value,
+  });
+  const data: PageResponse<Diagram> = response.data;
   items.value = data.content;
   serverItemsLength.value = data.totalElements;
 
   loading.value = false;
 };
 
-const openDiagram = (diagram: ClickRowArgument) => {
+const openDiagram = (diagram: ClickRowArgument): void => {
   router.push(`/design/${diagram.id}`);
 };
 
-const createDiagram = async (data: object) => {
+const createDiagram = async (data: Diagram): Promise<void> => {
   await axios.post("/diagrams", data);
   getDiagrams();
 };
 
-const editDiagram = async (data: any) => {
+const editDiagram = async (data: Diagram): Promise<void> => {
   await axios.put(`/diagrams/${data.id}`, data);
   getDiagrams();
 };
 
-const deleteDiagrams = async () => {
-  const ids = itemsSelected.value.map((x) => x.id);
+const deleteDiagrams = async (): Promise<void> => {
+  const ids: number[] = itemsSelected.value.map((x) => x.id);
   await axios.delete(`/diagrams/${ids}`);
   getDiagrams();
 };

@@ -2,15 +2,19 @@
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "@/service/index.js";
-
-const iframe = ref<HTMLIFrameElement | null>(null);
-const diagram = ref();
+import type Diagram from "@/types/Diagram.js";
+import type DrawioRequest from "@/types/DrawioRequest.js";
+import type DrawioMessage from "@/types/DrawioMessage.js";
+import type { AxiosResponse } from "axios";
 
 const route = useRoute();
 const router = useRouter();
 
-const getDiagram = async () => {
-  let response: any;
+const iframe = ref<HTMLIFrameElement>();
+const diagram = ref<Diagram>();
+
+const getDiagram = async (): Promise<void> => {
+  let response: AxiosResponse;
   try {
     response = await axios.get(`/diagrams/${route.params.id}`);
   } catch (err) {
@@ -18,33 +22,38 @@ const getDiagram = async () => {
     return;
   }
 
-  const request: any = { action: "load" };
+  const request: DrawioRequest = { action: "load" };
   diagram.value = response.data[0];
-  const diagramData = diagram.value.data;
-  if (diagramData) {
-    request.xml = diagramData;
+  if (diagram.value?.data) {
+    request.xml = diagram.value.data;
   }
 
   iframe.value?.contentWindow?.postMessage(JSON.stringify(request), "*");
 };
 
-const saveDiagram = (data: string) => {
+const saveDiagram = (data: string): void => {
+  if (!diagram.value) {
+    return;
+  }
+
   diagram.value.data = data;
   axios.put(`/diagrams/${route.params.id}`, diagram.value);
 };
 
 window.addEventListener(
   "message",
-  async function (event: MessageEvent): Promise<void> {
-    if (event.origin !== "https://embed.diagrams.net") {
+  async (messageEvent: MessageEvent): Promise<void> => {
+    if (messageEvent.origin !== "https://embed.diagrams.net") {
       return;
     }
 
-    const { event: eventType, xml: data } = JSON.parse(event.data);
+    const { event: eventType, xml: data }: DrawioMessage = JSON.parse(
+      messageEvent.data
+    );
 
     if (eventType === "init") {
       getDiagram();
-    } else if (eventType === "save") {
+    } else if (eventType === "save" && data) {
       saveDiagram(data);
     } else if (eventType === "exit") {
       router.push("/");

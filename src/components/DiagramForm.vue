@@ -1,23 +1,21 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import type Diagram from "@/types/Diagram";
 
-const propsForm = defineProps({
-  action: String,
-  icon: String,
-  diagram: Object,
-});
+const propsForm = defineProps<{
+  action: string;
+  icon: string;
+  diagram?: Diagram;
+}>();
 
-const emit = defineEmits(["confirm"]);
+const emit = defineEmits<{ (e: "confirm", diagram: Diagram): void }>();
 
-const dialog = ref(false);
+const dialog = ref<boolean>(false);
+const diagram = ref<Diagram>({ ...propsForm.diagram });
 
-const diagram = ref({ ...propsForm.diagram });
-
-const requiredRule = [(x: string) => !!x];
-
-const confirm = () => {
-  const newTitle = diagram.value.title;
-  const newDescription = diagram.value.description;
+const confirm = (): void => {
+  const newTitle: string | undefined = diagram.value.title;
+  const newDescription: string | undefined = diagram.value.description;
   if (
     newTitle === undefined ||
     newTitle.length === 0 ||
@@ -31,7 +29,7 @@ const confirm = () => {
   close();
 };
 
-const close = () => {
+const close = (): void => {
   diagram.value = {};
   dialog.value = false;
 };
@@ -50,14 +48,12 @@ const close = () => {
         <v-form>
           <v-text-field
             v-model="diagram.title"
-            :rules="requiredRule"
             label="Title"
             required
           ></v-text-field>
 
           <v-textarea
             v-model="diagram.description"
-            :rules="requiredRule"
             label="Description"
             required
           ></v-textarea>
