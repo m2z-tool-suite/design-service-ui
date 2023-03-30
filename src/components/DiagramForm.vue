@@ -11,17 +11,19 @@ const propsForm = defineProps<{
 const emit = defineEmits<{ (e: "confirm", diagram: Diagram): void }>();
 
 const dialog = ref<boolean>(false);
+
+const rules = [
+  (v: any) =>
+    v === undefined || v === null || (v.length && v.length === 0)
+      ? "This field is required"
+      : true,
+];
+
 const diagram = ref<Diagram>({ ...propsForm.diagram });
 
-const confirm = (): void => {
-  const newTitle: string | undefined = diagram.value.title;
-  const newDescription: string | undefined = diagram.value.description;
-  if (
-    newTitle === undefined ||
-    newTitle.length === 0 ||
-    newDescription === undefined ||
-    newDescription.length === 0
-  ) {
+const submit = async (event: SubmitEvent): Promise<void> => {
+  const results: any = await event;
+  if (!results.valid) {
     return;
   }
 
@@ -36,33 +38,36 @@ const close = (): void => {
 </script>
 
 <template>
-  <v-dialog v-model="dialog" width="600">
+  <v-dialog v-model="dialog" @keydown.esc="close" width="600">
     <template v-slot:activator="{ props }">
       <v-icon v-bind="props" :icon="propsForm.icon" size="x-large"></v-icon>
     </template>
 
-    <v-card>
-      <v-card-title>{{ propsForm.action }} diagram</v-card-title>
+    <v-form validate-on="submit" @submit.prevent="submit">
+      <v-card>
+        <v-card-title>{{ propsForm.action }} diagram</v-card-title>
 
-      <v-card-text>
-        <v-form>
+        <v-card-text>
           <v-text-field
             v-model="diagram.title"
+            :rules="rules"
             label="Title"
             required
           ></v-text-field>
 
           <v-textarea
             v-model="diagram.description"
+            :rules="rules"
             label="Description"
             required
           ></v-textarea>
-        </v-form>
-      </v-card-text>
-      <v-card-actions class="text-right">
-        <v-btn color="primary" @click="confirm">Confirm</v-btn>
-        <v-btn color="primary" @click="close">Cancel</v-btn>
-      </v-card-actions>
-    </v-card>
+        </v-card-text>
+
+        <v-card-actions class="text-right">
+          <v-btn type="submit" color="primary">Submit</v-btn>
+          <v-btn color="primary" @click="close">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-form>
   </v-dialog>
 </template>

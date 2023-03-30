@@ -58,8 +58,11 @@ const getDiagrams = async (): Promise<void> => {
     params: parameters.value,
   });
   const data: PageResponse<Diagram> = response.data;
-  items.value = data.content;
+
   serverItemsLength.value = data.totalElements;
+  if (serverItemsLength.value) {
+    items.value = data.content;
+  }
 
   loading.value = false;
 };
