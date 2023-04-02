@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import axios from "@/service/index.js";
+import { axiosDesign } from "@/service/index.js";
 import RequirementForm from "@/components/RequirementForm.vue";
 import type { Header, Item, ServerOptions } from "vue3-easy-data-table";
 import type Requirement from "@/types/Requirement";
@@ -61,7 +61,7 @@ const parameters = computed<PageRequest>(() => {
 const getRequirements = async (): Promise<void> => {
   loading.value = true;
 
-  const response: AxiosResponse = await axios.get("/requirements", {
+  const response: AxiosResponse = await axiosDesign.get("/requirements", {
     params: parameters.value,
   });
   const data: PageResponse<Requirement> = response.data;
@@ -74,28 +74,28 @@ const getRequirements = async (): Promise<void> => {
   loading.value = false;
 };
 
-const createRequirement = async (data: Requirement): Promise<void> => {
-  await axios.post("/requirements", data);
+const createRequirement = async (requirement: Requirement): Promise<void> => {
+  await axiosDesign.post("/requirements", requirement);
   getRequirements();
 };
 
-const editRequirement = async (data: Requirement): Promise<void> => {
-  await axios.put(`/requirements/${data.id}`, data);
+const editRequirement = async (requirement: Requirement): Promise<void> => {
+  await axiosDesign.put(`/requirements/${requirement.id}`, requirement);
   getRequirements();
 };
 
 const deleteRequirements = async (): Promise<void> => {
   const ids: number[] = itemsSelected.value.map((x) => x.id);
-  await axios.delete(`/requirements/${ids}`);
+  await axiosDesign.delete(`/requirements/${ids}`);
   getRequirements();
 };
 
 const getRequirementsOptions = async (): Promise<void> => {
   const response = await Promise.all([
-    axios.get("/requirement-types/all"),
-    axios.get("/requirement-priorities/all"),
-    axios.get("/requirement-risks/all"),
-    axios.get("/requirement-statuses/all"),
+    axiosDesign.get("/requirement-types/all"),
+    axiosDesign.get("/requirement-priorities/all"),
+    axiosDesign.get("/requirement-risks/all"),
+    axiosDesign.get("/requirement-statuses/all"),
   ]);
 
   const data = response.map((x) => x.data);

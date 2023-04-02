@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import axios from "@/service/index.js";
+import { axiosDesign } from "@/service/index.js";
 import type Diagram from "@/types/Diagram.js";
 import type DrawioRequest from "@/types/DrawioRequest.js";
 import type DrawioMessage from "@/types/DrawioMessage.js";
@@ -16,7 +16,7 @@ const diagram = ref<Diagram>();
 const getDiagram = async (): Promise<void> => {
   let response: AxiosResponse;
   try {
-    response = await axios.get(`/diagrams/${route.params.id}`);
+    response = await axiosDesign.get(`/diagrams/${route.params.id}`);
   } catch (err) {
     router.push("/");
     return;
@@ -37,7 +37,7 @@ const saveDiagram = (data: string): void => {
   }
 
   diagram.value.data = data;
-  axios.put(`/diagrams/${route.params.id}`, diagram.value);
+  axiosDesign.put(`/diagrams/${route.params.id}`, diagram.value);
 };
 
 window.addEventListener(

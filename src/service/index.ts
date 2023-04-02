@@ -1,9 +1,14 @@
 import axios, { type AxiosInstance } from "axios";
 
-const URL = "http://localhost:8080/api";
+const URL_DESIGN = "http://localhost:8080/api";
+const URL_GENERATOR = "http://localhost:5000/api";
 
-const axiosInstance: AxiosInstance = axios.create({
-  baseURL: URL,
+const axiosDesign: AxiosInstance = axios.create({
+  baseURL: URL_DESIGN,
 });
 
-export default axiosInstance;
+const axiosGenerator: AxiosInstance = axios.create({
+  baseURL: URL_GENERATOR,
+});
+
+export { axiosDesign, axiosGenerator };
