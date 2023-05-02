@@ -33,6 +33,8 @@ const serverOptions = ref<ServerOptions>({
 
 const loading = ref<boolean>(false);
 
+const search = ref<string>("");
+
 const parameters = computed<PageRequest>(() => {
   const { page, rowsPerPage, sortBy, sortType } = serverOptions.value;
 
@@ -51,13 +53,18 @@ const getDiagrams = async (): Promise<void> => {
   loading.value = true;
 
   const response: AxiosResponse = await axiosDesign.get("/diagrams", {
-    params: parameters.value,
+    params: {
+      ...parameters.value,
+      search: search.value,
+    },
   });
   const data: PageResponse<Diagram> = response.data;
 
   serverItemsLength.value = data.totalElements;
   if (serverItemsLength.value) {
     items.value = data.content;
+  } else {
+    items.value = [];
   }
 
   loading.value = false;
@@ -128,6 +135,17 @@ watch(serverOptions, () => getDiagrams(), { deep: true });
 
     <DeleteDialog :selection="itemsSelected" @confirm="deleteDiagrams" />
   </div>
+  <v-text-field
+    v-model="search"
+    class="mb-3 mx-3"
+    density="compact"
+    variant="filled"
+    label="Search diagrams"
+    append-inner-icon="mdi-magnify"
+    single-line
+    hide-details
+    @click:append-inner="getDiagrams"
+  ></v-text-field>
   <EasyDataTable
     v-model:server-options="serverOptions"
     v-model:items-selected="itemsSelected"
