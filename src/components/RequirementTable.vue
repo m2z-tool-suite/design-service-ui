@@ -2,6 +2,7 @@
 import { ref, computed, watch } from "vue";
 import { axiosDesign } from "@/service/index.js";
 import RequirementForm from "@/components/RequirementForm.vue";
+import DeleteDialog from "@/components/DeleteDialog.vue";
 import type { Header, Item, ServerOptions } from "vue3-easy-data-table";
 import type Requirement from "@/types/Requirement";
 import type RequirementType from "@/types/RequirementType";
@@ -119,11 +120,8 @@ watch(serverOptions, () => getRequirements(), { deep: true });
       :statuses="statuses"
       @confirm="createRequirement"
     />
-    <v-icon
-      @click="deleteRequirements"
-      icon="mdi-delete"
-      size="x-large"
-    ></v-icon>
+
+    <DeleteDialog :selection="itemsSelected" @confirm="deleteRequirements" />
   </div>
   <EasyDataTable
     v-model:server-options="serverOptions"

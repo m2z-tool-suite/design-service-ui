@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { axiosDesign, axiosGenerator } from "@/service/index.js";
 import DiagramForm from "@/components/DiagramForm.vue";
+import DeleteDialog from "@/components/DeleteDialog.vue";
 import type { Header, Item, ServerOptions } from "vue3-easy-data-table";
 import type Diagram from "@/types/Diagram";
 import type PageRequest from "@/types/PageRequest";
@@ -124,7 +125,8 @@ watch(serverOptions, () => getDiagrams(), { deep: true });
       :icon="'mdi-plus'"
       @confirm="createDiagram"
     />
-    <v-icon @click="deleteDiagrams" icon="mdi-delete" size="x-large"></v-icon>
+
+    <DeleteDialog :selection="itemsSelected" @confirm="deleteDiagrams" />
   </div>
   <EasyDataTable
     v-model:server-options="serverOptions"

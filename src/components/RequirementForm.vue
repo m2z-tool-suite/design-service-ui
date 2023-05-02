@@ -122,7 +122,7 @@ const close = (): void => {
             required
           ></v-text-field>
 
-          <v-card-actions class="text-right">
+          <v-card-actions>
             <v-btn type="submit" color="primary">Submit</v-btn>
             <v-btn color="primary" @click="close">Cancel</v-btn>
           </v-card-actions>
