@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { axiosDesign, axiosGenerator } from "@/service/index.js";
 import DiagramForm from "@/components/DiagramForm.vue";
 import DeleteDialog from "@/components/DeleteDialog.vue";
@@ -10,6 +10,7 @@ import type PageRequest from "@/types/PageRequest";
 import type PageResponse from "@/types/PageResponse";
 import type { AxiosResponse } from "axios";
 
+const route = useRoute();
 const router = useRouter();
 
 const rowsItems: number[] = [10, 25, 50, 100];
@@ -52,10 +53,11 @@ const parameters = computed<PageRequest>(() => {
 const getDiagrams = async (): Promise<void> => {
   loading.value = true;
 
-  const response: AxiosResponse = await axiosDesign.get("/diagrams", {
+  const response: AxiosResponse = await axiosDesign.get("/diagrams/project", {
     params: {
       ...parameters.value,
       search: search.value,
+      project: route.params.project,
     },
   });
   const data: PageResponse<Diagram> = response.data;
@@ -122,19 +124,11 @@ const generateCode = async (diagram: Diagram): Promise<void> => {
 
 getDiagrams();
 
+watch(route, () => getDiagrams(), { deep: true });
 watch(serverOptions, () => getDiagrams(), { deep: true });
 </script>
 
 <template>
-  <div class="text-right mb-6 mr-6">
-    <DiagramForm
-      :action="'Create'"
-      :icon="'mdi-plus'"
-      @confirm="createDiagram"
-    />
-
-    <DeleteDialog :selection="itemsSelected" @confirm="deleteDiagrams" />
-  </div>
   <v-text-field
     v-model="search"
     class="mb-3 mx-3"
@@ -146,6 +140,14 @@ watch(serverOptions, () => getDiagrams(), { deep: true });
     hide-details
     @click:append-inner="getDiagrams"
   ></v-text-field>
+  <div class="text-right mb-3 mr-6">
+    <DiagramForm
+      :action="'Create'"
+      :icon="'mdi-plus'"
+      @confirm="createDiagram"
+    />
+    <DeleteDialog :selection="itemsSelected" @confirm="deleteDiagrams" />
+  </div>
   <EasyDataTable
     v-model:server-options="serverOptions"
     v-model:items-selected="itemsSelected"

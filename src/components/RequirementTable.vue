@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
+import { useRoute } from "vue-router";
 import { axiosDesign } from "@/service/index.js";
 import RequirementForm from "@/components/RequirementForm.vue";
 import DeleteDialog from "@/components/DeleteDialog.vue";
@@ -12,6 +13,8 @@ import type RequirementStatus from "@/types/RequirementStatus";
 import type PageRequest from "@/types/PageRequest";
 import type PageResponse from "@/types/PageResponse";
 import type { AxiosResponse } from "axios";
+
+const route = useRoute();
 
 const rowsItems: number[] = [10, 25, 50, 100];
 const themeColor: string = "#0049B0";
@@ -64,12 +67,16 @@ const parameters = computed<PageRequest>(() => {
 const getRequirements = async (): Promise<void> => {
   loading.value = true;
 
-  const response: AxiosResponse = await axiosDesign.get("/requirements", {
-    params: {
-      ...parameters.value,
-      search: search.value,
-    },
-  });
+  const response: AxiosResponse = await axiosDesign.get(
+    "/requirements/project",
+    {
+      params: {
+        ...parameters.value,
+        search: search.value,
+        project: route.params.project,
+      },
+    }
+  );
   const data: PageResponse<Requirement> = response.data;
 
   serverItemsLength.value = data.totalElements;
@@ -113,23 +120,11 @@ const getRequirementsOptions = async (): Promise<void> => {
 getRequirements();
 getRequirementsOptions();
 
+watch(route, () => getRequirements(), { deep: true });
 watch(serverOptions, () => getRequirements(), { deep: true });
 </script>
 
 <template>
-  <div class="text-right mb-6 mr-6">
-    <RequirementForm
-      :action="'Create'"
-      :icon="'mdi-plus'"
-      :types="types"
-      :priorities="priorities"
-      :risks="risks"
-      :statuses="statuses"
-      @confirm="createRequirement"
-    />
-
-    <DeleteDialog :selection="itemsSelected" @confirm="deleteRequirements" />
-  </div>
   <v-text-field
     v-model="search"
     class="mb-3 mx-3"
@@ -141,6 +136,18 @@ watch(serverOptions, () => getRequirements(), { deep: true });
     hide-details
     @click:append-inner="getRequirements"
   ></v-text-field>
+  <div class="text-right mb-3 mr-6">
+    <RequirementForm
+      :action="'Create'"
+      :icon="'mdi-plus'"
+      :types="types"
+      :priorities="priorities"
+      :risks="risks"
+      :statuses="statuses"
+      @confirm="createRequirement"
+    />
+    <DeleteDialog :selection="itemsSelected" @confirm="deleteRequirements" />
+  </div>
   <EasyDataTable
     v-model:server-options="serverOptions"
     v-model:items-selected="itemsSelected"

@@ -1,27 +1,29 @@
 <script setup lang="ts">
-import RequirementTable from "@/components/RequirementTable.vue";
-import DiagramTable from "@/components/DiagramTable.vue";
+import { useRoute, RouterView } from "vue-router";
+import { Amplify } from "aws-amplify";
+import { Authenticator, useAuthenticator } from "@aws-amplify/ui-vue";
+import "@aws-amplify/ui-vue/styles.css";
+import MenuComponent from "@/components/MenuComponent.vue";
 
-import { ref } from "vue";
+const route = useRoute();
+const auth = useAuthenticator();
 
-const tab = ref(null);
+Amplify.configure({
+  Auth: {
+    userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
+    userPoolWebClientId: import.meta.env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID,
+  },
+});
 </script>
 
 <template>
-  <h1 class="text-center my-5">Design your software product</h1>
-
-  <v-card>
-    <v-tabs v-model="tab" align-tabs="center">
-      <v-tab :value="1">Requirements</v-tab>
-      <v-tab :value="2">Diagrams</v-tab>
-    </v-tabs>
-    <v-window v-model="tab">
-      <v-window-item :value="1">
-        <RequirementTable />
-      </v-window-item>
-      <v-window-item :value="2">
-        <DiagramTable />
-      </v-window-item>
-    </v-window>
-  </v-card>
+  <authenticator
+    :login-mechanisms="['email']"
+    :hide-sign-up="true"
+    class="h-100"
+  />
+  <MenuComponent v-if="auth.route === 'authenticated'" class="pa-6 h-100">
+    <p v-if="route.path === '/'">Open a project to get started</p>
+    <RouterView />
+  </MenuComponent>
 </template>

@@ -6,8 +6,23 @@ const router = createRouter({
   routes: [
     {
       path: "/",
-      name: "home",
+      name: "login",
       component: HomeView,
+    },
+    {
+      path: "/:project/",
+      name: "project",
+      component: HomeView,
+      children: [
+        {
+          path: "requirements",
+          component: () => import("../components/RequirementTable.vue"),
+        },
+        {
+          path: "diagrams",
+          component: () => import("../components/DiagramTable.vue"),
+        },
+      ],
     },
     {
       path: "/design/:id",

@@ -11,6 +11,8 @@ import "@mdi/font/css/materialdesignicons.css";
 import Vue3EasyDataTable from "vue3-easy-data-table";
 import "vue3-easy-data-table/dist/style.css";
 
+import "./assets/styles/amplify.css";
+
 const vuetify = createVuetify({
   components,
   directives,
