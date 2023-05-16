@@ -8,7 +8,16 @@ const router = useRouter();
 
 const title = ref<string>("Software designer");
 const drawer = ref<boolean>(false);
-const projects = ref<Array<string>>(["Project 1", "Project 2", "Project 3"]); // FIXME: get projects from Cognito
+const projects = ref<Array<string>>();
+
+const getProjects = async (): Promise<void> => {
+  const groups = (await Auth.currentSession()).getIdToken().decodePayload()[
+    "cognito:groups"
+  ];
+  projects.value = groups
+    .filter((group: string) => group.startsWith("PROJECT_"))
+    .map((group: string) => group.replace("PROJECT_", ""));
+};
 
 const openProject = (project: string, data: string): void => {
   title.value = `${project} - ${data}`;
@@ -25,6 +34,8 @@ if (Object.keys(route.params).length) {
   const data = route.path.split("/").slice(-1);
   title.value = `${project} - ${data}`;
 }
+
+getProjects();
 </script>
 
 <template>
