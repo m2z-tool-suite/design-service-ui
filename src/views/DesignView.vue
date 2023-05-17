@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { Auth } from "aws-amplify";
 import { axiosDesign } from "@/service/index.js";
 import type Diagram from "@/types/Diagram.js";
 import type DrawioRequest from "@/types/DrawioRequest.js";
@@ -10,8 +11,28 @@ import type { AxiosResponse } from "axios";
 const route = useRoute();
 const router = useRouter();
 
+const urls = {
+  write:
+    "https://embed.diagrams.net?embed=1&ui=atlas&spin=1&modified=unsavedChanges&proto=json",
+  read: "https://embed.diagrams.net?embed=1&ui=atlas&spin=1&modified=unsavedChanges&proto=json&saveAndExit=0&noSaveBtn=1",
+};
+const url = ref<string>(urls.read);
+
 const iframe = ref<HTMLIFrameElement>();
 const diagram = ref<Diagram>();
+
+const getProjectType = async (projectTitle: string): Promise<void> => {
+  const groups = (await Auth.currentSession()).getIdToken().decodePayload()[
+    "cognito:groups"
+  ];
+  const project = groups.find((group: string) =>
+    group.startsWith(`PROJECT_${projectTitle}_`)
+  );
+  const type = project.replace(`PROJECT_${projectTitle}_`, "");
+  if (type === "WRITE") {
+    url.value = urls.write;
+  }
+};
 
 const getDiagram = async (): Promise<void> => {
   let response: AxiosResponse;
@@ -24,9 +45,13 @@ const getDiagram = async (): Promise<void> => {
 
   const request: DrawioRequest = { action: "load" };
   diagram.value = response.data[0];
-  if (diagram.value?.data) {
-    request.xml = diagram.value.data;
+
+  if (!diagram.value) {
+    return;
   }
+
+  request.xml = diagram.value.data;
+  await getProjectType(diagram.value.project);
 
   iframe.value?.contentWindow?.postMessage(JSON.stringify(request), "*");
 };
@@ -63,12 +88,7 @@ window.addEventListener(
 </script>
 
 <template>
-  <iframe
-    ref="iframe"
-    src="https://embed.diagrams.net?embed=1&ui=atlas&spin=1&modified=unsavedChanges&proto=json"
-    title="draw.io"
-    class="w-100 h-100"
-  ></iframe>
+  <iframe ref="iframe" :src="url" title="draw.io" class="w-100 h-100"></iframe>
 </template>
 
 <style scoped>

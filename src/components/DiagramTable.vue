@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { Auth } from "aws-amplify";
 import { axiosDesign, axiosGenerator } from "@/service/index.js";
 import DiagramForm from "@/components/DiagramForm.vue";
 import DeleteDialog from "@/components/DeleteDialog.vue";
@@ -24,7 +25,7 @@ const headers: Header[] = [
 ];
 
 const items = ref<Item[]>([]);
-const itemsSelected = ref<Item[]>([]);
+const itemsSelected = ref<Item[]>();
 
 const serverItemsLength = ref<number>(0);
 const serverOptions = ref<ServerOptions>({
@@ -35,6 +36,8 @@ const serverOptions = ref<ServerOptions>({
 const loading = ref<boolean>(false);
 
 const search = ref<string>("");
+
+const projectType = ref<string>("READ");
 
 const parameters = computed<PageRequest>(() => {
   const { page, rowsPerPage, sortBy, sortType } = serverOptions.value;
@@ -50,17 +53,34 @@ const parameters = computed<PageRequest>(() => {
   return result;
 });
 
+watch(
+  route,
+  () => {
+    getDiagrams();
+    getProjectType();
+  },
+  { deep: true }
+);
+watch(serverOptions, () => getDiagrams(), { deep: true });
+
 const getDiagrams = async (): Promise<void> => {
   loading.value = true;
 
-  const response: AxiosResponse = await axiosDesign.get("/diagrams/project", {
-    params: {
-      ...parameters.value,
-      search: search.value,
-      project: route.params.project,
-    },
-  });
-  const data: PageResponse<Diagram> = response.data;
+  let response: AxiosResponse<PageResponse<Diagram>> | undefined;
+  try {
+    response = await axiosDesign.get("/diagrams/project", {
+      params: {
+        ...parameters.value,
+        search: search.value,
+        project: route.params.project,
+      },
+    });
+  } catch (error: any) {
+    router.push("/");
+  }
+
+  if (!response) return;
+  const data: PageResponse<Diagram> = response?.data;
 
   serverItemsLength.value = data.totalElements;
   if (serverItemsLength.value) {
@@ -77,7 +97,10 @@ const openDiagram = (diagram: Diagram): void => {
 };
 
 const createDiagram = async (diagram: Diagram): Promise<void> => {
-  await axiosDesign.post("/diagrams", diagram);
+  await axiosDesign.post("/diagrams", {
+    ...diagram,
+    project: route.params.project,
+  });
   getDiagrams();
 };
 
@@ -87,9 +110,23 @@ const editDiagram = async (diagram: Diagram): Promise<void> => {
 };
 
 const deleteDiagrams = async (): Promise<void> => {
+  if (!itemsSelected.value) return;
   const ids: number[] = itemsSelected.value.map((x) => x.id);
   await axiosDesign.delete(`/diagrams/${ids}`);
   getDiagrams();
+};
+
+const getProjectType = async (): Promise<void> => {
+  const groups = (await Auth.currentSession()).getIdToken().decodePayload()[
+    "cognito:groups"
+  ];
+  const projectTitle = route.params.project;
+  const project = groups.find((group: string) =>
+    group.startsWith(`PROJECT_${projectTitle}_`)
+  );
+  const type = project.replace(`PROJECT_${projectTitle}_`, "");
+  projectType.value = type;
+  itemsSelected.value = type === "WRITE" ? [] : undefined;
 };
 
 const generateCode = async (diagram: Diagram): Promise<void> => {
@@ -97,6 +134,7 @@ const generateCode = async (diagram: Diagram): Promise<void> => {
     const response = await axiosGenerator.post(
       "/generate-code",
       {
+        id: diagram.id,
         data: diagram.data,
       },
       { responseType: "blob" }
@@ -123,9 +161,7 @@ const generateCode = async (diagram: Diagram): Promise<void> => {
 };
 
 getDiagrams();
-
-watch(route, () => getDiagrams(), { deep: true });
-watch(serverOptions, () => getDiagrams(), { deep: true });
+getProjectType();
 </script>
 
 <template>
@@ -140,7 +176,7 @@ watch(serverOptions, () => getDiagrams(), { deep: true });
     hide-details
     @click:append-inner="getDiagrams"
   ></v-text-field>
-  <div class="text-right mb-3 mr-6">
+  <div v-if="projectType === 'WRITE'" class="text-right mb-3 mr-6">
     <DiagramForm
       :action="'Create'"
       :icon="'mdi-plus'"
@@ -150,7 +186,7 @@ watch(serverOptions, () => getDiagrams(), { deep: true });
   </div>
   <EasyDataTable
     v-model:server-options="serverOptions"
-    v-model:items-selected="itemsSelected"
+    :items-selected="projectType === 'WRITE' ? itemsSelected : undefined"
     :headers="headers"
     :items="items"
     :server-items-length="serverItemsLength"
@@ -162,6 +198,7 @@ watch(serverOptions, () => getDiagrams(), { deep: true });
     <template #item-action="item">
       <div class="text-right pa-4">
         <DiagramForm
+          v-if="projectType === 'WRITE'"
           :action="'Edit'"
           :icon="'mdi-pen'"
           :diagram="item"

@@ -3,7 +3,7 @@ import { ref } from "vue";
 import type { Item } from "vue3-easy-data-table";
 
 const props = defineProps<{
-  selection: Item[];
+  selection?: Item[];
 }>();
 
 const emit = defineEmits<{ (e: "confirm"): void }>();
@@ -11,7 +11,7 @@ const emit = defineEmits<{ (e: "confirm"): void }>();
 const dialog = ref<boolean>(false);
 
 const checkSelection = (): void => {
-  if (!props.selection.length) {
+  if (!props.selection || !props.selection.length) {
     close();
   }
 };

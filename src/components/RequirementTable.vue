@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { Auth } from "aws-amplify";
 import { axiosDesign } from "@/service/index.js";
 import RequirementForm from "@/components/RequirementForm.vue";
 import DeleteDialog from "@/components/DeleteDialog.vue";
@@ -15,6 +16,7 @@ import type PageResponse from "@/types/PageResponse";
 import type { AxiosResponse } from "axios";
 
 const route = useRoute();
+const router = useRouter();
 
 const rowsItems: number[] = [10, 25, 50, 100];
 const themeColor: string = "#0049B0";
@@ -29,11 +31,15 @@ const headers: Header[] = [
   { text: "Risk", value: "risk.title" },
   { text: "Status", value: "status.title" },
   { text: "Effort assessment", value: "effortAssessment", sortable: true },
+];
+
+const headersWithActions: Header[] = [
+  ...headers,
   { text: "", value: "action" },
 ];
 
 const items = ref<Item[]>([]);
-const itemsSelected = ref<Item[]>([]);
+const itemsSelected = ref<Item[]>();
 
 const types = ref<RequirementType[]>([]);
 const priorities = ref<RequirementPriority[]>([]);
@@ -50,6 +56,8 @@ const loading = ref<boolean>(false);
 
 const search = ref<string>("");
 
+const projectType = ref<string>("READ");
+
 const parameters = computed<PageRequest>(() => {
   const { page, rowsPerPage, sortBy, sortType } = serverOptions.value;
 
@@ -64,19 +72,33 @@ const parameters = computed<PageRequest>(() => {
   return result;
 });
 
+watch(
+  route,
+  () => {
+    getRequirements();
+    getProjectType();
+  },
+  { deep: true }
+);
+watch(serverOptions, () => getRequirements(), { deep: true });
+
 const getRequirements = async (): Promise<void> => {
   loading.value = true;
 
-  const response: AxiosResponse = await axiosDesign.get(
-    "/requirements/project",
-    {
+  let response: AxiosResponse<PageResponse<Requirement>> | undefined;
+  try {
+    response = await axiosDesign.get("/requirements/project", {
       params: {
         ...parameters.value,
         search: search.value,
         project: route.params.project,
       },
-    }
-  );
+    });
+  } catch (error: any) {
+    router.push("/");
+  }
+
+  if (!response) return;
   const data: PageResponse<Requirement> = response.data;
 
   serverItemsLength.value = data.totalElements;
@@ -90,7 +112,10 @@ const getRequirements = async (): Promise<void> => {
 };
 
 const createRequirement = async (requirement: Requirement): Promise<void> => {
-  await axiosDesign.post("/requirements", requirement);
+  await axiosDesign.post("/requirements", {
+    ...requirement,
+    project: route.params.project,
+  });
   getRequirements();
 };
 
@@ -100,6 +125,7 @@ const editRequirement = async (requirement: Requirement): Promise<void> => {
 };
 
 const deleteRequirements = async (): Promise<void> => {
+  if (!itemsSelected.value) return;
   const ids: number[] = itemsSelected.value.map((x) => x.id);
   await axiosDesign.delete(`/requirements/${ids}`);
   getRequirements();
@@ -117,11 +143,22 @@ const getRequirementsOptions = async (): Promise<void> => {
   [types.value, priorities.value, risks.value, statuses.value] = data;
 };
 
+const getProjectType = async (): Promise<void> => {
+  const groups = (await Auth.currentSession()).getIdToken().decodePayload()[
+    "cognito:groups"
+  ];
+  const projectTitle = route.params.project;
+  const project = groups.find((group: string) =>
+    group.startsWith(`PROJECT_${projectTitle}_`)
+  );
+  const type = project.replace(`PROJECT_${projectTitle}_`, "");
+  projectType.value = type;
+  itemsSelected.value = type === "WRITE" ? [] : undefined;
+};
+
 getRequirements();
 getRequirementsOptions();
-
-watch(route, () => getRequirements(), { deep: true });
-watch(serverOptions, () => getRequirements(), { deep: true });
+getProjectType();
 </script>
 
 <template>
@@ -136,7 +173,7 @@ watch(serverOptions, () => getRequirements(), { deep: true });
     hide-details
     @click:append-inner="getRequirements"
   ></v-text-field>
-  <div class="text-right mb-3 mr-6">
+  <div v-if="projectType === 'WRITE'" class="text-right mb-3 mr-6">
     <RequirementForm
       :action="'Create'"
       :icon="'mdi-plus'"
@@ -151,7 +188,7 @@ watch(serverOptions, () => getRequirements(), { deep: true });
   <EasyDataTable
     v-model:server-options="serverOptions"
     v-model:items-selected="itemsSelected"
-    :headers="headers"
+    :headers="projectType === 'WRITE' ? headersWithActions : headers"
     :items="items"
     :server-items-length="serverItemsLength"
     :loading="loading"
@@ -159,7 +196,7 @@ watch(serverOptions, () => getRequirements(), { deep: true });
     :theme-color="themeColor"
     buttonsPagination
   >
-    <template #item-action="item">
+    <template v-if="projectType === 'WRITE'" #item-action="item">
       <div class="text-right pa-4">
         <RequirementForm
           :action="'Edit'"
