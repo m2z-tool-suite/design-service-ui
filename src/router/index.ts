@@ -16,11 +16,18 @@ const router = createRouter({
       children: [
         {
           path: "requirements",
+          name: "requirements",
           component: () => import("../components/RequirementTable.vue"),
         },
         {
           path: "diagrams",
+          name: "diagrams",
           component: () => import("../components/DiagramTable.vue"),
+        },
+        {
+          path: "docs/:type",
+          name: "docs",
+          component: () => import("../components/DocsTables.vue"),
         },
       ],
     },

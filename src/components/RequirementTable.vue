@@ -75,6 +75,7 @@ const parameters = computed<PageRequest>(() => {
 watch(
   route,
   () => {
+    if (route.name !== "requirements") return;
     getRequirements();
     getProjectType();
   },
@@ -87,11 +88,11 @@ const getRequirements = async (): Promise<void> => {
 
   let response: AxiosResponse<PageResponse<Requirement>> | undefined;
   try {
-    response = await axiosDesign.get("/requirements/project", {
+    const id = route.params.project;
+    response = await axiosDesign.get(`/requirements/project/${id}`, {
       params: {
         ...parameters.value,
         search: search.value,
-        project: route.params.project,
       },
     });
   } catch (error: any) {
@@ -194,6 +195,7 @@ getProjectType();
     :loading="loading"
     :rows-items="rowsItems"
     :theme-color="themeColor"
+    table-class-name="wide-table"
     buttonsPagination
   >
     <template v-if="projectType === 'WRITE'" #item-action="item">

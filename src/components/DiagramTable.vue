@@ -56,6 +56,7 @@ const parameters = computed<PageRequest>(() => {
 watch(
   route,
   () => {
+    if (route.name !== "diagrams") return;
     getDiagrams();
     getProjectType();
   },
@@ -68,11 +69,11 @@ const getDiagrams = async (): Promise<void> => {
 
   let response: AxiosResponse<PageResponse<Diagram>> | undefined;
   try {
-    response = await axiosDesign.get("/diagrams/project", {
+    const id = route.params.project;
+    response = await axiosDesign.get(`/diagrams/project/${id}`, {
       params: {
         ...parameters.value,
         search: search.value,
-        project: route.params.project,
       },
     });
   } catch (error: any) {
@@ -193,6 +194,7 @@ getProjectType();
     :loading="loading"
     :rows-items="rowsItems"
     :theme-color="themeColor"
+    table-class-name="wide-table"
     buttonsPagination
   >
     <template #item-action="item">

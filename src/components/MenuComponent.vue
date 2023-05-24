@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import meta from "@/meta";
 import { useRoute, useRouter } from "vue-router";
 import { Auth } from "aws-amplify";
 import type Project from "@/types/Project";
@@ -92,6 +93,13 @@ getProjects();
             </v-list-item>
             <v-list-item @click="openProject(project, 'diagrams')">
               <v-list-item-title>Diagrams</v-list-item-title>
+            </v-list-item>
+            <v-list-item
+              v-for="m in meta"
+              :key="m.key"
+              @click="openProject(project, `docs/${m.key}`)"
+            >
+              <v-list-item-title>{{ m.name }}</v-list-item-title>
             </v-list-item>
             <v-divider />
           </template>
