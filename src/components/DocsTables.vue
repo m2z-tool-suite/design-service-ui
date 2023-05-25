@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import meta from "@/meta";
+import { ref, computed, watch } from "vue";
+import store from "@/store/index";
 import { useRoute } from "vue-router";
 import ReadOnlyTable from "@/components/ReadOnlyTable.vue";
 import type { Item } from "vue3-easy-data-table";
@@ -14,6 +14,8 @@ const selectedItem = ref<Item>();
 
 const projectDataSource = ref<string>("");
 
+const meta = computed<any>(() => store.state.meta);
+
 watch(
   route,
   () => {
@@ -24,8 +26,10 @@ watch(
 );
 
 const initialize = () => {
+  if (!meta.value) return;
+
   const type = route.params.type;
-  selectedType.value = meta.find((m: any) => m.key === type);
+  selectedType.value = meta.value.find((m: any) => m.key === type);
 
   const projectId = route.params.project;
   projectDataSource.value = selectedType.value.dataSource + projectId;
@@ -40,7 +44,7 @@ const mainTableRowClicked = (item: any) => {
 initialize();
 </script>
 
-<template>
+<template v-if="selectedType">
   <v-tabs bg-color="primary">
     <v-tab>{{ selectedType.name }}</v-tab>
   </v-tabs>

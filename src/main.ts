@@ -1,6 +1,10 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
+import store from "./store";
+
+import { Amplify } from "aws-amplify";
+import "@aws-amplify/ui-vue/styles.css";
 
 import "vuetify/styles";
 import { createVuetify } from "vuetify";
@@ -13,6 +17,13 @@ import "vue3-easy-data-table/dist/style.css";
 
 import "./assets/styles/global.css";
 import "./assets/styles/amplify.css";
+
+Amplify.configure({
+  Auth: {
+    userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
+    userPoolWebClientId: import.meta.env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID,
+  },
+});
 
 const vuetify = createVuetify({
   components,
@@ -29,6 +40,8 @@ const vuetify = createVuetify({
     },
   },
 });
+
+store.actions.fetchMeta();
 
 const app = createApp(App).use(router).use(vuetify);
 app.component("EasyDataTable", Vue3EasyDataTable);

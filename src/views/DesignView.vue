@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Auth } from "aws-amplify";
-import { axiosDesign } from "@/service/index.js";
+import { axiosDesign } from "@/service/index";
 import type Diagram from "@/types/Diagram.js";
 import type DrawioRequest from "@/types/DrawioRequest.js";
 import type DrawioMessage from "@/types/DrawioMessage.js";

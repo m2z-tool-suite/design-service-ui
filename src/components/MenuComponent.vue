@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import meta from "@/meta";
+import { ref, computed, watch } from "vue";
+import store from "@/store/index";
 import { useRoute, useRouter } from "vue-router";
 import { Auth } from "aws-amplify";
 import type Project from "@/types/Project";
@@ -12,16 +12,12 @@ const title = ref<string>("Software designer");
 const drawer = ref<boolean>(false);
 const projects = ref<Array<Project>>();
 
+const meta = computed<any>(() => store.state.meta);
+
 watch(
   route,
   () => {
-    if (Object.keys(route.params).length) {
-      const projectTitle = route.params.project;
-      const data = route.path.split("/").slice(-1);
-      title.value = `${projectTitle}  - ${data}`;
-    } else {
-      title.value = "Software designer";
-    }
+    setTitle();
   },
   { deep: true }
 );
@@ -53,12 +49,23 @@ const openProject = (project: Project, data: string): void => {
   router.push(`/${project.title}/${data}`);
 };
 
+const setTitle = (): void => {
+  if (Object.keys(route.params).length) {
+    const projectTitle = route.params.project;
+    const data = route.path.split("/").slice(-1);
+    title.value = `${projectTitle}  - ${data}`;
+  } else {
+    title.value = "Software designer";
+  }
+};
+
 const signOut = async (): Promise<void> => {
   await Auth.signOut();
   router.push("/");
 };
 
 getProjects();
+setTitle();
 </script>
 
 <template>

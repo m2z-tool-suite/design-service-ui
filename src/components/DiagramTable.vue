@@ -2,7 +2,7 @@
 import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Auth } from "aws-amplify";
-import { axiosDesign, axiosGenerator } from "@/service/index.js";
+import { axiosDesign, axiosGenerator } from "@/service/index";
 import DiagramForm from "@/components/DiagramForm.vue";
 import DeleteDialog from "@/components/DeleteDialog.vue";
 import type { Header, Item, ServerOptions } from "vue3-easy-data-table";

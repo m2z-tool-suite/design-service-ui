@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
-import { axiosDesign } from "@/service/index.js";
+import { axiosDesign } from "@/service/index";
 import type { Header, Item, ServerOptions } from "vue3-easy-data-table";
 import type PageRequest from "@/types/PageRequest";
 import type PageResponse from "@/types/PageResponse";
