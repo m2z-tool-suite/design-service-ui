@@ -45,8 +45,8 @@ const getProjects = async (): Promise<void> => {
 };
 
 const openProject = (project: Project, data: string): void => {
-  title.value = `${project.title} - ${data}`;
   router.push(`/${project.title}/${data}`);
+  setTitle();
 };
 
 const setTitle = (): void => {

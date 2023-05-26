@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import store from "@/store/index";
 import { useRoute } from "vue-router";
+import store from "@/store/index";
+import { axiosDesign, axiosGenerator } from "@/service/index";
 import ReadOnlyTable from "@/components/ReadOnlyTable.vue";
+import ReportForm from "@/components/ReportForm.vue";
 import type { Item } from "vue3-easy-data-table";
+import type ClassType from "@/types/ClassType";
+import type ReportParameters from "@/types/ReportParameters";
 
 const route = useRoute();
 
@@ -12,9 +16,12 @@ const tab = ref<string>();
 const selectedType = ref<any>();
 const selectedItem = ref<Item>();
 
+const project = ref<string>(route.params.project as string);
 const projectDataSource = ref<string>("");
 
 const meta = computed<any>(() => store.state.meta);
+
+const classTypes = ref<ClassType[]>([]);
 
 watch(
   route,
@@ -41,7 +48,38 @@ const mainTableRowClicked = (item: any) => {
   selectedItem.value = item;
 };
 
+const getClassTypes = async (): Promise<void> => {
+  const response = await axiosDesign.get("/class-types/all");
+  classTypes.value = response.data;
+};
+
+const generateReport = async (parameters: ReportParameters): Promise<void> => {
+  try {
+    const response = await axiosGenerator.post("/generate-report", parameters);
+    const data = response.data;
+    const id = JSON.parse(data)._id.$oid;
+
+    // create link to download file and click it
+    const href =
+      "data:text/json;charset=utf-8," +
+      JSON.stringify(JSON.parse(data), null, 2);
+    const link = document.createElement("a");
+    link.href = href;
+    link.setAttribute("download", `${id}.json`);
+    document.body.appendChild(link);
+    link.click();
+
+    // clean up
+    document.body.removeChild(link);
+    URL.revokeObjectURL(href);
+  } catch (error: any) {
+    console.log(error);
+    window.alert("Report generator is not available at the moment.");
+  }
+};
+
 initialize();
+getClassTypes();
 </script>
 
 <template v-if="selectedType">
@@ -77,4 +115,12 @@ initialize();
       </v-window-item>
     </v-window>
   </template>
+
+  <div v-if="selectedType.key === 'methods'" class="text-right my-4">
+    <ReportForm
+      :project="project"
+      :classTypes="classTypes"
+      @confirm="generateReport"
+    />
+  </div>
 </template>

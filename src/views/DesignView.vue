@@ -46,7 +46,7 @@ const getDiagram = async (): Promise<void> => {
   const request: DrawioRequest = { action: "load" };
   diagram.value = response.data[0];
 
-  if (!diagram.value) {
+  if (!diagram.value || !diagram.value.project) {
     return;
   }
 

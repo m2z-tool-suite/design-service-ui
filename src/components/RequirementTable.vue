@@ -25,11 +25,11 @@ const headers: Header[] = [
   { text: "ID", value: "id", sortable: true },
   { text: "Title", value: "title", sortable: true },
   { text: "Description", value: "description", sortable: true },
-  { text: "Type", value: "type.title" },
-  { text: "Priority", value: "priority.title" },
+  { text: "Type", value: "type.title", sortable: true },
+  { text: "Priority", value: "priority.title", sortable: true },
   { text: "Stakeholders", value: "stakeholders", sortable: true },
-  { text: "Risk", value: "risk.title" },
-  { text: "Status", value: "status.title" },
+  { text: "Risk", value: "risk.title", sortable: true },
+  { text: "Status", value: "status.title", sortable: true },
   { text: "Effort assessment", value: "effortAssessment", sortable: true },
 ];
 
