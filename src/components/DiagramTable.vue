@@ -136,6 +136,7 @@ const generateCode = async (diagram: Diagram): Promise<void> => {
       "/generate-code",
       {
         id: diagram.id,
+        title: diagram.title,
         data: diagram.data,
       },
       { responseType: "blob" }
@@ -144,8 +145,17 @@ const generateCode = async (diagram: Diagram): Promise<void> => {
     // create link to download file and click it
     const href = URL.createObjectURL(response.data);
     const link = document.createElement("a");
+
+    // get filename from response header
+    response.headers["content-disposition"]?.split(";").forEach((x) => {
+      if (x.includes("filename")) {
+        const filename = x.split("=")[1].trim().replaceAll('"', "");
+        console.log(filename);
+        link.setAttribute("download", filename);
+      }
+    });
+
     link.href = href;
-    link.setAttribute("download", `${diagram.title}.zip`);
     document.body.appendChild(link);
     link.click();
 

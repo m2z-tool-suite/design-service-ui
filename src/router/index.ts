@@ -12,6 +12,7 @@ const router = createRouter({
     {
       path: "/:project/",
       name: "project",
+      redirect: { name: "requirements" },
       component: HomeView,
       children: [
         {

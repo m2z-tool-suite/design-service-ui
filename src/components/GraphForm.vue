@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import type ReportParameters from "@/types/ReportParameters";
-import type ClassType from "@/types/ClassType";
+import type GraphParameters from "@/types/GraphParameters";
 
 const propsForm = defineProps<{
   project: string;
-  classTypes: ClassType[];
 }>();
 
 const emit = defineEmits<{
-  (e: "confirm", parameters: ReportParameters): void;
+  (e: "confirm", parameters: GraphParameters): void;
 }>();
 
 const dialog = ref<boolean>(false);
@@ -21,7 +19,7 @@ const rules = [
       : true,
 ];
 
-const parameters = ref<ReportParameters>({});
+const parameters = ref<GraphParameters>({});
 
 const submit = async (event: SubmitEvent): Promise<void> => {
   const results: any = await event;
@@ -42,12 +40,12 @@ const close = (): void => {
 <template>
   <v-dialog v-model="dialog" @keydown.esc="close" width="600">
     <template v-slot:activator="{ props }">
-      <v-btn v-bind="props" color="primary">Generate report</v-btn>
+      <v-btn v-bind="props" color="primary">Generate graph</v-btn>
     </template>
 
     <v-form validate-on="submit" @submit.prevent="submit">
       <v-card>
-        <v-card-title>Generate method list report</v-card-title>
+        <v-card-title>Generate relationship graph</v-card-title>
 
         <v-card-text>
           <v-text-field
@@ -57,16 +55,6 @@ const close = (): void => {
             required
             readonly
           ></v-text-field>
-
-          <v-select
-            v-model="parameters.classType"
-            :rules="rules"
-            :items="propsForm.classTypes"
-            item-title="name"
-            item-value="id"
-            label="Class type"
-            required
-          ></v-select>
         </v-card-text>
 
         <v-card-actions>

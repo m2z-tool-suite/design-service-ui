@@ -4,10 +4,12 @@ import { useRoute } from "vue-router";
 import store from "@/store/index";
 import { axiosDesign, axiosGenerator } from "@/service/index";
 import ReadOnlyTable from "@/components/ReadOnlyTable.vue";
-import ReportForm from "@/components/ReportForm.vue";
+import DocumentForm from "@/components/DocumentForm.vue";
+import GraphForm from "@/components/GraphForm.vue";
 import type { Item } from "vue3-easy-data-table";
 import type ClassType from "@/types/ClassType";
-import type ReportParameters from "@/types/ReportParameters";
+import type DocumentParameters from "@/types/DocumentParameters";
+import type GraphParameters from "@/types/GraphParameters";
 
 const route = useRoute();
 
@@ -38,8 +40,8 @@ const initialize = () => {
   const type = route.params.type;
   selectedType.value = meta.value.find((m: any) => m.key === type);
 
-  const projectId = route.params.project;
-  projectDataSource.value = selectedType.value.dataSource + projectId;
+  project.value = route.params.project as string;
+  projectDataSource.value = selectedType.value.dataSource + project.value;
 
   selectedItem.value = undefined;
 };
@@ -53,9 +55,14 @@ const getClassTypes = async (): Promise<void> => {
   classTypes.value = response.data;
 };
 
-const generateReport = async (parameters: ReportParameters): Promise<void> => {
+const generateDocument = async (
+  parameters: DocumentParameters
+): Promise<void> => {
   try {
-    const response = await axiosGenerator.post("/generate-report", parameters);
+    const response = await axiosGenerator.post(
+      "/generate-document",
+      parameters
+    );
     const data = response.data;
     const id = JSON.parse(data)._id.$oid;
 
@@ -73,8 +80,45 @@ const generateReport = async (parameters: ReportParameters): Promise<void> => {
     document.body.removeChild(link);
     URL.revokeObjectURL(href);
   } catch (error: any) {
-    console.log(error);
-    window.alert("Report generator is not available at the moment.");
+    if (error.response.status === 400) {
+      window.alert("No data available to generate document.");
+    } else {
+      window.alert("Document generator is not available at the moment.");
+    }
+  }
+};
+
+const generateGraph = async (parameters: GraphParameters): Promise<void> => {
+  try {
+    const response = await axiosGenerator.post("/generate-graph", parameters, {
+      responseType: "blob",
+    });
+
+    // create link to download file and click it
+    const href = URL.createObjectURL(response.data);
+    const link = document.createElement("a");
+
+    // get filename from response header
+    response.headers["content-disposition"]?.split(";").forEach((x) => {
+      if (x.includes("filename")) {
+        const filename = x.split("=")[1].trim().replace('"', "");
+        link.setAttribute("download", filename);
+      }
+    });
+
+    link.href = href;
+    document.body.appendChild(link);
+    link.click();
+
+    // clean up
+    document.body.removeChild(link);
+    URL.revokeObjectURL(href);
+  } catch (error: any) {
+    if (error.response.status === 400) {
+      window.alert("No data available to generate graph.");
+    } else {
+      window.alert("Graph generator is not available at the moment.");
+    }
   }
 };
 
@@ -82,7 +126,7 @@ initialize();
 getClassTypes();
 </script>
 
-<template v-if="selectedType">
+<template>
   <v-tabs bg-color="primary">
     <v-tab>{{ selectedType.name }}</v-tab>
   </v-tabs>
@@ -92,7 +136,7 @@ getClassTypes();
     @rowClicked="mainTableRowClicked"
   />
 
-  <template v-if="selectedItem">
+  <template v-if="selectedItem && selectedType.children">
     <v-tabs v-model="tab" bg-color="primary">
       <v-tab
         v-for="child in selectedType.children"
@@ -102,7 +146,7 @@ getClassTypes();
         {{ child.name }}
       </v-tab>
     </v-tabs>
-    <v-window v-if="selectedItem" v-model="tab">
+    <v-window v-model="tab">
       <v-window-item
         v-for="child in selectedType.children"
         :key="child.key"
@@ -117,10 +161,14 @@ getClassTypes();
   </template>
 
   <div v-if="selectedType.key === 'methods'" class="text-right my-4">
-    <ReportForm
+    <DocumentForm
       :project="project"
       :classTypes="classTypes"
-      @confirm="generateReport"
+      @confirm="generateDocument"
     />
+  </div>
+
+  <div v-if="selectedType.key === 'relationships'" class="text-right my-4">
+    <GraphForm :project="project" @confirm="generateGraph" />
   </div>
 </template>
