@@ -13,13 +13,20 @@ const router = useRouter();
 
 const urls = {
   write:
-    "https://embed.diagrams.net?embed=1&ui=atlas&spin=1&modified=unsavedChanges&proto=json",
-  read: "https://embed.diagrams.net?embed=1&ui=atlas&spin=1&modified=unsavedChanges&proto=json&saveAndExit=0&noSaveBtn=1",
+    "https://embed.diagrams.net?embed=1&configure=1&ui=atlas&spin=1&modified=unsavedChanges&proto=json",
+  read: "https://embed.diagrams.net?embed=1&configure=1&ui=atlas&spin=1&modified=unsavedChanges&proto=json&saveAndExit=0&noSaveBtn=1",
 };
 const url = ref<string>(urls.read);
 
 const iframe = ref<HTMLIFrameElement>();
 const diagram = ref<Diagram>();
+
+const configureDrawio = (): void => {
+  iframe.value?.contentWindow?.postMessage(
+    JSON.stringify({ action: "configure", config: { compressXml: true } }),
+    "*"
+  );
+};
 
 const getProjectType = async (projectTitle: string): Promise<void> => {
   const groups = (await Auth.currentSession()).getIdToken().decodePayload()[
@@ -76,7 +83,9 @@ window.addEventListener(
       messageEvent.data
     );
 
-    if (eventType === "init") {
+    if (eventType === "configure") {
+      configureDrawio();
+    } else if (eventType === "init") {
       getDiagram();
     } else if (eventType === "save" && data) {
       saveDiagram(data);
