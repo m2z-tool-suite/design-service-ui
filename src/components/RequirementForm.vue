@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import { axiosDesign } from "@/service/index";
+import type { AxiosResponse } from "axios";
 import type Requirement from "@/types/Requirement";
 import type RequirementType from "@/types/RequirementType";
 import type RequirementPriority from "@/types/RequirementPriority";
@@ -9,7 +11,7 @@ import type RequirementStatus from "@/types/RequirementStatus";
 const propsForm = defineProps<{
   action: string;
   icon: string;
-  requirement?: Requirement;
+  requirementId?: number;
   types: RequirementType[];
   priorities: RequirementPriority[];
   risks: RequirementRisk[];
@@ -27,9 +29,26 @@ const rules = [
       : true,
 ];
 
-const requirement = ref<Requirement>({
-  ...propsForm.requirement,
-});
+const requirement = ref<Requirement>({});
+
+watch(
+  () => dialog.value,
+  () => {
+    if (dialog.value && propsForm.requirementId) {
+      getRequirement(propsForm.requirementId);
+    }
+  }
+);
+
+const getRequirement = async (id: number): Promise<void> => {
+  let response: AxiosResponse<Requirement[]>;
+  try {
+    response = await axiosDesign.get(`/requirements/${id}`);
+    requirement.value = response.data[0];
+  } catch (error: any) {
+    close();
+  }
+};
 
 const submit = async (event: SubmitEvent): Promise<void> => {
   const results: any = await event;

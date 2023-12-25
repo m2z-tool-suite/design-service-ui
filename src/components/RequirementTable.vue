@@ -198,12 +198,12 @@ getProjectType();
     table-class-name="wide-table"
     buttonsPagination
   >
-    <template v-if="projectType === 'WRITE'" #item-action="item">
+    <template v-if="projectType === 'WRITE'" #item-action="{ id }">
       <div class="text-right pa-4">
         <RequirementForm
           :action="'Edit'"
           :icon="'mdi-pen'"
-          :requirement="item"
+          :requirement-id="id"
           :types="types"
           :priorities="priorities"
           :risks="risks"

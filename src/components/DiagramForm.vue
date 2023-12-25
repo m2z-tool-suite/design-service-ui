@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import { axiosDesign } from "@/service/index";
+import type { AxiosResponse } from "axios";
 import type Diagram from "@/types/Diagram";
 
 const propsForm = defineProps<{
   action: string;
   icon: string;
-  diagram?: Diagram;
+  diagramId?: number;
 }>();
 
 const emit = defineEmits<{ (e: "confirm", diagram: Diagram): void }>();
@@ -19,7 +21,26 @@ const rules = [
       : true,
 ];
 
-const diagram = ref<Diagram>({ ...propsForm.diagram });
+const diagram = ref<Diagram>({});
+
+watch(
+  () => dialog.value,
+  () => {
+    if (dialog.value && propsForm.diagramId) {
+      getDiagram(propsForm.diagramId);
+    }
+  }
+);
+
+const getDiagram = async (id: number): Promise<void> => {
+  let response: AxiosResponse<Diagram[]>;
+  try {
+    response = await axiosDesign.get(`/diagrams/${id}`);
+    diagram.value = response.data[0];
+  } catch (error: any) {
+    close();
+  }
+};
 
 const submit = async (event: SubmitEvent): Promise<void> => {
   const results: any = await event;

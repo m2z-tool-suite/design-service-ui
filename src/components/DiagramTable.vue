@@ -93,8 +93,8 @@ const getDiagrams = async (): Promise<void> => {
   loading.value = false;
 };
 
-const openDiagram = (diagram: Diagram): void => {
-  router.push(`/design/${diagram.id}`);
+const openDiagram = (diagramId: number): void => {
+  router.push(`/design/${diagramId}/${projectType.value.toLowerCase()}`);
 };
 
 const createDiagram = async (diagram: Diagram): Promise<void> => {
@@ -130,8 +130,13 @@ const getProjectType = async (): Promise<void> => {
   itemsSelected.value = type === "WRITE" ? [] : undefined;
 };
 
-const generateCode = async (diagram: Diagram): Promise<void> => {
+const generateCode = async (diagramId: number): Promise<void> => {
   try {
+    const diagram = items.value.find((x) => x.id === diagramId);
+    if (!diagram) {
+      throw new Error("Internal error - Diagram not found");
+    }
+
     const response = await axiosGenerator.post(
       "/generate-code",
       {
@@ -145,16 +150,7 @@ const generateCode = async (diagram: Diagram): Promise<void> => {
     // create link to download file and click it
     const href = URL.createObjectURL(response.data);
     const link = document.createElement("a");
-
-    // get filename from response header
-    response.headers["content-disposition"]?.split(";").forEach((x) => {
-      if (x.includes("filename")) {
-        const filename = x.split("=")[1].trim().replaceAll('"', "");
-        console.log(filename);
-        link.setAttribute("download", filename);
-      }
-    });
-
+    link.setAttribute("download", `${diagram.title}.zip`);
     link.href = href;
     document.body.appendChild(link);
     link.click();
@@ -197,7 +193,7 @@ getProjectType();
   </div>
   <EasyDataTable
     v-model:server-options="serverOptions"
-    :items-selected="projectType === 'WRITE' ? itemsSelected : undefined"
+    v-model:items-selected="itemsSelected"
     :headers="headers"
     :items="items"
     :server-items-length="serverItemsLength"
@@ -207,13 +203,13 @@ getProjectType();
     table-class-name="wide-table"
     buttonsPagination
   >
-    <template #item-action="item">
+    <template #item-action="{ id }">
       <div class="text-right pa-4">
         <DiagramForm
           v-if="projectType === 'WRITE'"
           :action="'Edit'"
           :icon="'mdi-pen'"
-          :diagram="item"
+          :diagram-id="id"
           class="mx-1"
           @confirm="editDiagram"
         />
@@ -221,13 +217,13 @@ getProjectType();
           icon="mdi-pencil-ruler"
           size="x-large"
           class="mx-1"
-          @click="openDiagram(item)"
+          @click="openDiagram(id)"
         ></v-icon>
         <v-icon
           icon="mdi-file-code-outline"
           size="x-large"
           class="mx-1"
-          @click="generateCode(item)"
+          @click="generateCode(id)"
         ></v-icon>
       </div>
     </template>

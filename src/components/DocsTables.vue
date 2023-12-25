@@ -153,7 +153,7 @@ getClassTypes();
         :value="child.key"
       >
         <ReadOnlyTable
-          :headers="meta.find((m: any) => m.key === child.key).headers"
+          :headers="meta.find((m: any) => m.key === child.key)?.headers"
           :data-source="child.dataSource + selectedItem.id"
         />
       </v-window-item>

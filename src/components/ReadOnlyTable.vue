@@ -8,7 +8,7 @@ import type PageResponse from "@/types/PageResponse";
 import type { AxiosResponse } from "axios";
 
 const props = defineProps<{
-  headers: Header[];
+  headers?: Header[];
   dataSource: string;
 }>();
 
@@ -105,6 +105,18 @@ getData();
 </script>
 
 <template>
+  <v-text-field
+    v-model="search"
+    class="ma-3"
+    density="compact"
+    variant="filled"
+    label="Search"
+    append-inner-icon="mdi-magnify"
+    single-line
+    hide-details
+    @click:append-inner="getData"
+  ></v-text-field>
+
   <EasyDataTable
     v-model:server-options="serverOptions"
     v-model:items-selected="itemsSelected"

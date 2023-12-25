@@ -47,6 +47,7 @@ const getProjects = async (): Promise<void> => {
 const openProject = (project: Project, data: string): void => {
   router.push(`/${project.title}/${data}`);
   setTitle();
+  drawer.value = false;
 };
 
 const setTitle = (): void => {
@@ -64,6 +65,7 @@ const signOut = async (): Promise<void> => {
   router.push("/");
 };
 
+store.actions.fetchMeta();
 getProjects();
 setTitle();
 </script>

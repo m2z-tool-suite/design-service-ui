@@ -33,7 +33,7 @@ const router = createRouter({
       ],
     },
     {
-      path: "/design/:id",
+      path: "/design/:id/:type",
       name: "design",
       component: () => import("../views/DesignView.vue"),
     },

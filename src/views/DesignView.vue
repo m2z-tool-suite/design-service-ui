@@ -28,16 +28,25 @@ const configureDrawio = (): void => {
   );
 };
 
-const getProjectType = async (projectTitle: string): Promise<void> => {
+const getProjectType = async (): Promise<void> => {
+  const type = route.params.type;
+  if (type !== "write" && type !== "read") {
+    router.go(-1);
+    return;
+  }
+
+  url.value = urls[type];
+};
+
+const validateProjectType = async (projectTitle: string): Promise<void> => {
   const groups = (await Auth.currentSession()).getIdToken().decodePayload()[
     "cognito:groups"
   ];
-  const project = groups.find((group: string) =>
-    group.startsWith(`PROJECT_${projectTitle}_`)
-  );
-  const type = project.replace(`PROJECT_${projectTitle}_`, "");
-  if (type === "WRITE") {
-    url.value = urls.write;
+  const type = route.params.type;
+  const hasWritePrivilege = groups.includes(`PROJECT_${projectTitle}_WRITE`);
+  if (type === "write" && !hasWritePrivilege) {
+    router.go(-1);
+    return;
   }
 };
 
@@ -46,20 +55,19 @@ const getDiagram = async (): Promise<void> => {
   try {
     response = await axiosDesign.get(`/diagrams/${route.params.id}`);
   } catch (err) {
-    router.push("/");
+    router.go(-1);
     return;
   }
 
-  const request: DrawioRequest = { action: "load" };
   diagram.value = response.data[0];
+};
 
-  if (!diagram.value || !diagram.value.project) {
+const setDiagram = async (): Promise<void> => {
+  if (!diagram.value) {
     return;
   }
 
-  request.xml = diagram.value.data;
-  await getProjectType(diagram.value.project);
-
+  const request: DrawioRequest = { action: "load", xml: diagram.value.data };
   iframe.value?.contentWindow?.postMessage(JSON.stringify(request), "*");
 };
 
@@ -86,14 +94,18 @@ window.addEventListener(
     if (eventType === "configure") {
       configureDrawio();
     } else if (eventType === "init") {
-      getDiagram();
+      await validateProjectType(diagram.value?.project || "");
+      setDiagram();
     } else if (eventType === "save" && data) {
       saveDiagram(data);
     } else if (eventType === "exit") {
-      router.push("/");
+      router.go(-1);
     }
   }
 );
+
+getProjectType();
+getDiagram();
 </script>
 
 <template>

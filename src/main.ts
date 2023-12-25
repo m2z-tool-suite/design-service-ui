@@ -1,7 +1,6 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
-import store from "./store";
 
 import { Amplify } from "aws-amplify";
 import "@aws-amplify/ui-vue/styles.css";
@@ -40,8 +39,6 @@ const vuetify = createVuetify({
     },
   },
 });
-
-store.actions.fetchMeta();
 
 const app = createApp(App).use(router).use(vuetify);
 app.component("EasyDataTable", Vue3EasyDataTable);

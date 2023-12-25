@@ -7,7 +7,8 @@
       "@/*": ["./src/*"]
     },
     "skipLibCheck": true,
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM"],
+    "resolveJsonModule": true,
   },
 
   "references": [
